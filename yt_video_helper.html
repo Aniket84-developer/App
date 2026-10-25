@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VidFetch — YouTube Video Helper</title>
+<style>
+:root {
+  --site-primary: #635bff;
+  --site-on-primary: #ffffff;
+  --site-secondary: #171a2b;
+  --site-on-secondary: #f8f8ff;
+  --site-background: #f5f6fb;
+  --site-on-background: #171a2b;
+  --site-font-body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --site-font-heading: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --site-heading-scale: 1;
+  --site-spacing-scale: 1;
+  --site-radius-scale: 1;
+  --site-decoration-opacity: 1;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: var(--site-font-body);
+  background: var(--site-background);
+  color: var(--site-on-background);
+}
+.app-root {
+  min-height: 100vh;
+  width: 100%;
+  border-radius: 0;
+  background-color: var(--site-background);
+  overflow: hidden;
+}
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  max-width: 1120px; margin: auto; padding: 22px 28px;
+}
+.brand { display: flex; gap: 11px; align-items: center; font-weight: 800; letter-spacing: -.04em; font-size: 20px; }
+.brand-icon { width: 38px; height: 38px; display:grid; place-items:center; border-radius: 13px; background: var(--site-primary); color: var(--site-on-primary); }
+.brand-icon svg { width: 20px; height: 20px; }
+.pill { border: 1px solid #dedff0; border-radius: 999px; padding: 8px 12px; font-size: 12px; font-weight: 700; color: #595d75; background: #fff; }
+.hero { max-width: 1120px; margin: 0 auto; padding: 54px 28px 72px; display: grid; grid-template-columns: 1.08fr .92fr; gap: 56px; align-items: center; }
+.eyebrow { color: var(--site-primary); font-size: 12px; text-transform: uppercase; font-weight: 800; letter-spacing: .16em; display:flex; gap:8px; align-items:center; }
+.dot { width: 7px; height:7px; border-radius:50%; background: #26b88a; }
+h1 { font-family: var(--site-font-heading); font-size: calc(58px * var(--site-heading-scale)); line-height: 1.02; letter-spacing: -.065em; margin: 20px 0; max-width: 610px; }
+.gradient { color: var(--site-primary); }
+.lede { color: #666b82; font-size: 17px; line-height: 1.7; max-width: 520px; }
+.panel { margin-top: 28px; padding: 8px; background: #fff; border: 1px solid #e5e7f2; box-shadow: 0 18px 50px rgba(36,39,80,.08); border-radius: calc(18px * var(--site-radius-scale)); display:flex; gap: 8px; }
+.input-wrap { display:flex; flex:1; gap:10px; align-items:center; min-width:0; padding: 0 12px; }
+.input-wrap svg { flex-shrink:0; color:#969ab0; width:19px; }
+input { width:100%; min-width:0; border:0; outline:0; font:inherit; font-size:14px; color:#20233b; padding: 12px 0; background:transparent; }
+button, .button { cursor:pointer; border:0; text-decoration:none; display:inline-flex; justify-content:center; align-items:center; gap:9px; border-radius: calc(12px * var(--site-radius-scale)); padding: 14px 17px; font:inherit; font-size:14px; font-weight:750; transition: transform .15s, opacity .15s; }
+button:hover, .button:hover { transform: translateY(-1px); }
+.primary { background: var(--site-primary); color:var(--site-on-primary); white-space:nowrap; }
+.note { color:#898da3; font-size:12px; line-height:1.55; margin: 12px 4px 0; }
+.status { display:none; margin-top:14px; padding:14px 16px; background:#f0efff; color:#39338e; border:1px solid #dcd9ff; border-radius:12px; font-size:13px; line-height:1.55; }
+.status.show { display:block; }
+.status strong { display:block; margin-bottom:3px; }
+.visual { position:relative; min-width:0; }
+.visual-card { background: var(--site-secondary); color:var(--site-on-secondary); padding: 25px; border-radius: calc(26px * var(--site-radius-scale)); box-shadow: 0 24px 70px rgba(26,27,55,.2); position:relative; overflow:hidden; }
+.visual-card:before { content:""; position:absolute; width:260px; height:260px; border-radius:50%; background:var(--site-primary); opacity:.22; filter:blur(2px); right:-90px; top:-100px; pointer-events:none; }
+.card-head { display:flex; justify-content:space-between; align-items:center; position:relative; z-index:1; }
+.card-label { color:#aeb0cc; text-transform:uppercase; letter-spacing:.13em; font-size:10px; font-weight:800; }
+.live { color:#8ef0c7; font-size:11px; font-weight:700; display:flex; align-items:center; gap:6px; }
+.preview { margin-top:24px; aspect-ratio:16/9; border:1px solid #3a3c55; border-radius:15px; background:linear-gradient(135deg,#292b46,#1a1c30); display:grid; place-items:center; overflow:hidden; position:relative; }
+.preview iframe { width:100%; height:100%; border:0; }
+.play { width:60px; height:60px; border-radius:20px; background:var(--site-primary); display:grid; place-items:center; box-shadow:0 8px 30px #635bff66; }
+.play svg { width:24px; margin-left:3px; }
+.preview-copy { text-align:center; padding:18px; color:#b5b8d1; font-size:12px; line-height:1.6; }
+.preview-copy strong { display:block; color:#fff; font-size:14px; margin-bottom:4px; }
+.quality { display:flex; justify-content:space-between; align-items:center; gap:14px; margin-top:20px; padding:15px 0 0; border-top:1px solid #36384f; }
+.quality strong { display:block; font-size:13px; }
+.quality span { color:#aeb0c8; font-size:11px; display:block; margin-top:4px; }
+.badge { background:#2e3150; color:#c6c4ff; border:1px solid #45456d; border-radius:9px; padding:9px 11px; font-size:11px; font-weight:800; white-space:nowrap; }
+.section { background:#fff; padding:62px 28px; }
+.section-inner { max-width:1120px; margin:auto; }
+.section h2 { font-size:calc(32px * var(--site-heading-scale)); letter-spacing:-.045em; margin:0 0 12px; }
+.section-intro { color:#70758a; line-height:1.7; max-width:620px; margin:0 0 30px; }
+.steps { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+.step { border:1px solid #e8e9f2; border-radius:calc(18px * var(--site-radius-scale)); padding:24px; background:light-dark(#ffffff,#20202a); }
+.step-number { width:36px; height:36px; display:grid; place-items:center; border-radius:12px; color:var(--site-primary); background:#efeeff; font-size:13px; font-weight:850; }
+.step h3 { font-size:16px; margin:18px 0 8px; }
+.step p { color:#74798e; font-size:13px; line-height:1.7; margin:0; }
+.step a { color:var(--site-primary); font-weight:700; text-decoration:none; }
+.footer { padding:24px 28px; text-align:center; font-size:12px; color:#8a8ea3; }
+@media (max-width:800px) {
+ .hero { grid-template-columns:1fr; gap:34px; padding-top:35px; }
+ h1 { font-size:calc(46px * var(--site-heading-scale)); }
+ .visual { max-width:540px; width:100%; margin:auto; }
+ .steps { grid-template-columns:1fr; }
+}
+@media (max-width:480px) {
+ .topbar { padding:16px 18px; }
+ .hero { padding:32px 18px 48px; }
+ h1 { font-size:40px; }
+ .panel { flex-direction:column; padding:9px; }
+ .primary { width:100%; }
+ .section { padding:45px 18px; }
+ .visual-card { padding:18px; }
+ .pill { font-size:10px; }
+}
+</style>
+</head>
+<body>
+<div class="app-root">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 7.5A2.5 2.5 0 0 1 7.5 5h9A2.5 2.5 0 0 1 19 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 16.5v-9Z" stroke="currentColor" stroke-width="1.8"/><path d="m10 9 5 3-5 3V9Z" fill="currentColor"/></svg></div>
+      VidFetch<span style="color:var(--site-primary)">.</span>
+    </div>
+    <div class="pill">VIDEO LINK HELPER · FREE</div>
+  </header>
+  <main>
+    <section class="hero">
+      <div>
+        <div class="eyebrow"><span class="dot"></span> Simple. Clear. Creator-friendly.</div>
+        <h1>Your video.<br><span class="gradient">Best quality.</span><br>No confusion.</h1>
+        <p class="lede">Paste a YouTube link to preview the video and get the right route for saving a copy you own or have permission to download.</p>
+        <form id="urlForm">
+          <div class="panel">
+            <div class="input-wrap">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <input id="videoUrl" type="url" placeholder="Paste YouTube video URL..." aria-label="YouTube video URL" required>
+            </div>
+            <button class="primary" type="submit">Check link <span aria-hidden="true">→</span></button>
+          </div>
+        </form>
+        <p class="note">Works with standard YouTube watch links, youtu.be links, and Shorts URLs. This preview does not bypass YouTube restrictions or download third-party videos.</p>
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+      </div>
+      <div class="visual">
+        <div class="visual-card">
+          <div class="card-head"><span class="card-label">Video preview</span><span class="live"><span class="dot"></span> READY TO CHECK</span></div>
+          <div class="preview" id="preview">
+            <div class="preview-copy"><div class="play"><svg viewBox="0 0 24 24" fill="none"><path d="m9 6 10 6-10 6V6Z" fill="white"/></svg></div><strong style="margin-top:15px">Your preview appears here</strong>Paste a valid YouTube URL to load its player.</div>
+          </div>
+          <div class="quality"><div><strong>Original resolution</strong><span>Keep the source quality when available</span></div><div class="badge">UP TO 4K*</div></div>
+        </div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="section-inner">
+        <h2>Save videos the right way.</h2>
+        <p class="section-intro">YouTube’s available download options depend on ownership, permissions, and your account or region. For your own uploads, YouTube Studio is the safest official route.</p>
+        <div class="steps">
+          <article class="step"><div class="step-number">01</div><h3>Paste your video link</h3><p>We check the URL format and load an embedded preview when the video allows embedding.</p></article>
+          <article class="step"><div class="step-number">02</div><h3>Open your own uploads</h3><p>Use <a href="https://studio.youtube.com/" target="_blank" rel="noopener noreferrer">YouTube Studio</a> and open Content to find the video you uploaded.</p></article>
+          <article class="step"><div class="step-number">03</div><h3>Choose the official download</h3><p>Use the video’s menu and choose Download when available. YouTube Studio downloads may not be the original or highest resolution.</p></article>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="footer">*Actual resolution depends on the original upload and available official options. Only save content you own or are authorized to download.</footer>
+</div>
+<script>
+const form = document.getElementById('urlForm');
+const input = document.getElementById('videoUrl');
+const preview = document.getElementById('preview');
+const status = document.getElementById('status');
+
+function getVideoId(raw) {
+  let url;
+  try { url = new URL(raw); } catch { return null; }
+  const host = url.hostname.toLowerCase().replace(/^www\./, '').replace(/^m\./, '');
+  if (host === 'youtu.be') {
+    const id = url.pathname.split('/').filter(Boolean)[0];
+    return id && /^[\w-]{11}$/.test(id) ? id : null;
+  }
+  if (!['youtube.com', 'youtube-nocookie.com'].includes(host) && !host.endsWith('.youtube.com')) return null;
+  let id = url.searchParams.get('v');
+  if (!id) {
+    const parts = url.pathname.split('/').filter(Boolean);
+    if (['shorts', 'embed', 'live', 'v'].includes(parts[0])) id = parts[1];
+  }
+  return id && /^[\w-]{11}$/.test(id) ? id : null;
+}
+form.addEventListener('submit', (event) => {
+  event.preventDefault();
+  const id = getVideoId(input.value.trim());
+  status.classList.add('show');
+  if (!id) {
+    status.innerHTML = '<strong>That link does not look right.</strong>Please paste a valid YouTube watch, Shorts, or youtu.be URL.';
+    preview.innerHTML = '<div class="preview-copy"><div class="play"><svg viewBox="0 0 24 24" fill="none"><path d="m9 6 10 6-10 6V6Z" fill="white"/></svg></div><strong style="margin-top:15px">Waiting for a valid link</strong>Check the URL and try again.</div>';
+    return;
+  }
+  preview.innerHTML = '';
+  const iframe = document.createElement('iframe');
+  iframe.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id);
+  iframe.title = 'YouTube video preview';
+  iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+  iframe.allowFullscreen = true;
+  preview.appendChild(iframe);
+  status.innerHTML = '<strong>Video link recognized.</strong>The player is loaded if embedding is enabled. To save a video you uploaded, open YouTube Studio and use its Download option when available. This page does not extract or download video streams.';
+});
+</script>
+</body>
+</html>
